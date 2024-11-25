@@ -1,0 +1,42 @@
+# Project details with specification
+name: gcp-pulumi-yaml
+description: Project for GCP YAML modules to create resources
+runtime: yaml
+resources:
+
+  # Create a GCP resource (Storage Bucket)
+  my-bucket:
+    type: gcp:storage:Bucket
+    properties:
+      location: US
+      website:
+        mainPageSuffix: index.html
+      uniformBucketLevelAccess: true
+
+  # HTML bucket object for static website    
+  index-html:
+    type: gcp:storage:BucketObject
+    properties:
+      bucket: ${my-bucket}
+      source:
+        fn::fileAsset: ./index.html
+
+  # IAM Role binding for public access      
+  my-bucket-binding:
+    type: gcp:storage:BucketIAMBinding
+    properties:
+      bucket: ${my-bucket.name}
+      role: "roles/storage.objectViewer"
+      members:
+        - allUsers
+
+# Bucket and object endpoint name        
+outputs:
+  # Export the DNS name of the bucket
+  bucketName: ${my-bucket.url}
+  bucketEndpoint: http://storage.googleapis.com/${my-bucket.name}/${index-html.name}
+
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: gcp-yaml
